@@ -1,0 +1,20 @@
+[
+  {
+    "question_name": "Q1",
+    "question_type": "essay_question",
+    "points_possible": 1,
+    "question_text": "<p data-allocator-embed=\"1\"><iframe src=\"https://nau-cs.github.io/peer-evaluation-toolkit/allocator/\" width=\"100%\" height=\"1180\" style=\"border:1px solid #c7cdd1;border-radius:6px;\" title=\"Peer Evaluation Helper\" loading=\"lazy\"></iframe></p><p style=\"font-size:0.9em;\">If the tool does not load, <a href=\"https://nau-cs.github.io/peer-evaluation-toolkit/allocator/\" target=\"_blank\">open it in a new tab</a>.</p><p><strong>Use the tool above, then paste its output here.</strong> It will not let you finish until your points add up correctly, and it writes the strengths and improvements into the same block. Everything the tool needs to explain is inside it &mdash; open the two grey sections at the top if you want the detail.</p><p>Your answer should look like this:</p><pre>POINTS\nabc123@your-university.edu = 110\nbcd456@your-university.edu = 100\ncde789@your-university.edu = 90\n\nSTRENGTHS\nbcd456@your-university.edu: built the card deck\ncde789@your-university.edu: wrote the rulebook\n\nIMPROVEMENTS\nbcd456@your-university.edu: n/a\ncde789@your-university.edu: missed the second build session</pre>"
+  },
+  {
+    "question_name": "Q2",
+    "question_type": "essay_question",
+    "points_possible": 1,
+    "question_text": "<p><strong>Justification.</strong> Required for any rating you gave below 80 or above 120. Explain it in terms of tasks assigned and tasks completed &mdash; not personality. Name the person by email.</p><p>Write <code>n/a</code> if every rating you gave was between 80 and 120.</p>"
+  },
+  {
+    "question_name": "Q3",
+    "question_type": "essay_question",
+    "points_possible": 1,
+    "question_text": "<p><strong>Anything else your instructor should know?</strong> Never shared with your teammates. Write <code>n/a</code> if nothing.</p><p>If something on your team needs attention <em>now</em> rather than at grading time, email directly &mdash; do not wait for this form.</p>"
+  }
+]

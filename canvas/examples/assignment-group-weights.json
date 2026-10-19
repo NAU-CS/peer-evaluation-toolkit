@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Link Based Game",
+    "weight": 15.0
+  },
+  {
+    "name": "Tangible Game",
+    "weight": 15.0
+  },
+  {
+    "name": "Graphical (Construct) Game",
+    "weight": 25.0
+  },
+  {
+    "name": "Critical Writing and Analysis",
+    "weight": 15.0
+  },
+  {
+    "name": "Quizzes",
+    "weight": 15.0
+  },
+  {
+    "name": "Participation and Attendance",
+    "weight": 10.0
+  },
+  {
+    "name": "Bonus",
+    "weight": 2.0
+  },
+  {
+    "name": "Portfolio",
+    "weight": 5.0
+  },
+  {
+    "name": "Reading/Listening/Watching/Playing",
+    "weight": 0.0
+  },
+  {
+    "name": "Additional Things to Play/Read/Watch",
+    "weight": 0.0
+  }
+]

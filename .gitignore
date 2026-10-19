@@ -1,0 +1,19 @@
+.env
+*.env
+!.env.example
+__pycache__/
+*.pyc
+reports/
+probe_output/
+backups/
+.venv/
+.DS_Store
+
+# Your filled-in course wiring. The templates (*.example.*) are tracked; the
+# real files are not -- they hold your course's Canvas ids.
+course.yml
+course.yaml
+config.yaml
+provision.yml
+provision.yaml
+provision.state.json

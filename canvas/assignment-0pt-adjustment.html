@@ -1,0 +1,56 @@
+<div id="dp-wrapper" class="dp-wrapper">
+<div class="dp-content-block" data-title="Peer Review Adjustment" data-category="Group Project">
+<h2 class="dp-has-icon"><i class="fas fa-balance-scale" aria-hidden="true"><span class="dp-icon-content" style="display: none;">&nbsp;</span></i> Peer Review Grade Adjustment</h2>
+<div class="dp-callout dp-callout-placeholder card dp-callout-position-default dp-callout-color-lg-info dp-callout-type-info w-100">
+<div class="dp-callout-side-emphasis"><i class="fas fa-info-circle dp-default-icon">​</i></div>
+<div class="card-body"><p class="card-text"><strong>Most students will receive a 0 here, and that is the expected result.</strong>
+This assignment is worth <strong>0 points</strong>. It exists so that credit on the {{ARC_NAME}} draft deliverables
+can be moved up or down for the small number of students whose teammates report that they did
+substantially more, or substantially less, than their share. If your team worked evenly, your score
+here is 0 and nothing about your grade changes.</p></div>
+</div>
+<h3>What this adjusts</h3>
+<p>Your team receives <strong>one shared grade</strong> on each group deliverable — everybody on the team gets the same
+number, exactly as the syllabus says. This line item is the only place where individual contribution changes anything.
+It applies to the draft half of the {{ARC_NAME}} project:</p>
+<div class="dp-table-scroll"><table class="table" style="border-collapse: collapse; width:100%;"><caption>Deliverables this adjustment applies to</caption><tbody>
+<tr><th style="text-align:left;" scope="col">Deliverable</th><th style="text-align:center; width:7em;" scope="col">Points</th></tr>
+<tr><td>Part 1 — Team Document and Ideation</td><td style="text-align:center;">9</td></tr><tr><td>Part 2 — Prototype</td><td style="text-align:center;">10</td></tr><tr><td>Part 3 — Draft</td><td style="text-align:center;">13</td></tr><tr><td><strong>Total covered</strong></td><td style="text-align:center;"><strong>32</strong></td></tr>
+</tbody></table></div>
+<h3>How the number is calculated</h3>
+<ol>
+<li>In the peer evaluation, each member of your team distributed <strong>N × 100</strong> points across the team,
+including themselves (N = team size). 100 means “did their fair share.”</li>
+<li>We average <em>every rating you received</em>, including your own self-rating. Call that your <strong>mean</strong>.</li>
+<li>Your <strong>factor</strong> is that mean divided by 100, then limited to the range <strong>0.60 – 1.10</strong>.
+A single harsh rating cannot sink you, and a generous team cannot inflate you without limit.</li>
+<li>Your adjustment is <code>(team points earned × factor) − team points earned</code>, rounded to two decimals.</li>
+</ol>
+<p>So: <strong>factor above 1.00 → positive points. Factor exactly 1.00 → zero. Factor below 1.00 → negative points.</strong></p>
+<h3>Worked example</h3>
+<p>Suppose your team earned <strong>27.2 of 32</strong> on the deliverables above.</p>
+<div class="dp-table-scroll"><table class="table" style="border-collapse: collapse; width:100%;"><caption>The same team grade of 27.2 / 32, five different contribution patterns</caption><tbody><tr><th style="text-align:left;" scope="col">What your teammates reported</th><th style="text-align:center;" scope="col">Mean</th><th style="text-align:center;" scope="col">Factor</th><th style="text-align:center; width:9em;" scope="col">Number entered as your grade here</th><th style="text-align:center;" scope="col">Your effective total</th></tr><tr><td>110, 108, 109 — you carried extra load</td><td style="text-align:center;">109.0</td><td style="text-align:center;">1.09</td><td style="text-align:center;"><strong>+2.45</strong></td><td style="text-align:center;">29.65</td></tr><tr><td>100, 100, 100 — even team (the usual case)</td><td style="text-align:center;">100.0</td><td style="text-align:center;">1.00</td><td style="text-align:center;"><strong>0</strong></td><td style="text-align:center;">27.2</td></tr><tr><td>95, 98, 100 — slightly below your share</td><td style="text-align:center;">97.7</td><td style="text-align:center;">0.98</td><td style="text-align:center;"><strong>−0.63</strong></td><td style="text-align:center;">26.57</td></tr><tr><td>82, 80, 98 — you contributed noticeably less</td><td style="text-align:center;">86.7</td><td style="text-align:center;">0.87</td><td style="text-align:center;"><strong>−3.54</strong></td><td style="text-align:center;">23.66</td></tr><tr><td><strong>55, 50, 60 — every teammate rated you very low</strong></td><td style="text-align:center;">55.0</td><td style="text-align:center;">0.60</td><td style="text-align:center;"><strong>−10.88</strong></td><td style="text-align:center;">16.32</td></tr></tbody></table></div><p><strong>The bottom row is the floor.</strong> Even when every teammate independently reports that you did far less than your share, the factor stops at <strong>0.60</strong> — it cannot go lower, no matter how low the ratings go. A unanimous very low rating is also the case most likely to bring you a conversation with {{INSTRUCTOR_NAME}} rather than just a number, because at that point the issue is not a few points.</p><p>The fourth column is literally the number that appears in your gradebook for this item: <strong>positive when your factor is above 1.00, exactly 0 when it is 1.00, negative when it is below</strong>. Because this assignment is worth 0 points, that number is added to (or subtracted from) your project total rather than being scored out of anything.</p>
+<h3>What you will see</h3>
+<ul>
+<li>A comment on this item showing your mean, how many teammates rated you, your factor, and the arithmetic.</li>
+<li>Anonymous, aggregated written feedback from your teammates — strengths and areas for improvement, with names removed.</li>
+<li><strong>You will never be told who gave which number.</strong> If your team has two people, be aware your partner can work
+out your rating from their own result — that is arithmetic, not a policy choice.</li>
+</ul>
+<h3>If you did not submit a peer evaluation</h3>
+<p>You still receive your teammates’ ratings, and the adjustment still applies to you. Not submitting removes your
+voice from the calculation; it does not exempt you from it. You also lose the completion points on the peer evaluation itself.</p>
+<div class="dp-callout dp-callout-placeholder card dp-callout-position-default dp-callout-color-lg-warning dp-callout-type-info w-100">
+<div class="dp-callout-side-emphasis"><i class="fas fa-comments dp-default-icon">​</i></div>
+<div class="card-body"><p class="card-text">If you think an adjustment is wrong, email {{INSTRUCTOR_NAME}} within one week of it being posted.
+Bring specifics about tasks assigned and completed. Better still: raise contribution problems
+<em>during</em> the project, when something can actually be done about them.</p></div>
+</div>
+<h3>Time and Outcomes</h3>
+<div class="dp-callout dp-callout-placeholder card dp-callout-position-default dp-callout-color-lg-info dp-callout-type-info w-100">
+<div class="dp-callout-side-emphasis"><i class="fas fa-clock dp-default-icon">​</i></div>
+<div class="card-body"><p class="card-text"><strong>Estimated time outside class:</strong> none — nothing is submitted here.</p></div>
+</div>
+<p><strong>Course learning outcomes:</strong> LO4 — work collaboratively as part of a small team to develop a playable game prototype<br><strong>Program outcomes:</strong> SO4 (Teamwork)</p>
+</div>
+</div>

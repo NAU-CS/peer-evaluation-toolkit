@@ -1,0 +1,146 @@
+# ---------------------------------------------------------------------------
+# Peer-evaluation toolkit -- your course, in one file.
+#
+#   cp course.example.yml course.yml     # course.yml is gitignored
+#   python3 discover.py                  # prints the ids below, for your course
+#
+# Your API token is NOT in this file and must never be. It lives in the macOS
+# keychain, or in CANVAS_TOKEN. See "The token" in docs/02-canvas-setup.md.
+# That means this file is safe to share with a colleague as a starting point.
+# ---------------------------------------------------------------------------
+
+canvas:
+  # Your Canvas host. No trailing slash, no /api/v1.
+  base_url: https://canvas.your-university.edu
+
+  # The number in your course URL:  /courses/<THIS>
+  course_id: 000000
+
+# Used only in the student-facing instructions and in email reconciliation,
+# so a typo'd address can be matched back to the right person.
+email:
+  domain: "@your-university.edu"
+  example: "abc123@your-university.edu"
+
+# Where the point allocator is served. The default below is the public copy and
+# works as-is. Host your own if you would rather not depend on someone else's
+# GitHub Pages: publish allocator/index.html anywhere and put the URL here.
+allocator_url: https://nau-cs.github.io/peer-evaluation-toolkit/allocator/
+
+# ---------------------------------------------------------------------------
+# Rounds. One entry per peer-evaluation checkpoint.
+#
+# The key ("tangible_draft") is what you type on the command line:
+#     python3 peer_report.py tangible_draft
+#
+# Delete these two and write your own. Two rounds per project -- one at the
+# draft, one at the final -- is a good default: the draft round is the one that
+# still changes behaviour, because there is time left to change it.
+# ---------------------------------------------------------------------------
+rounds:
+
+  example_draft:
+    arc: "Your Project Name"        # appears in every student-facing string
+    phase: "Draft"
+
+    # The group SET whose teams this round evaluates.
+    #   /api/v1/courses/<course_id>/group_categories
+    group_category_id: 000000
+
+    # The graded survey students fill in. Created by provision.py.
+    #   /api/v1/courses/<course_id>/quizzes
+    survey_quiz_id: 000000
+
+    # The 0-point assignment the adjustment is posted to. Created by
+    # provision.py. It MUST be worth 0 points and live in the same assignment
+    # group as the deliverables below -- docs/03-gradebook-math.md explains why.
+    adjustment_assignment_id: 000000
+
+    # The group deliverables this round's factor multiplies. The adjustment is
+    #     team_earned x factor  -  team_earned
+    # summed across exactly these assignments, so list all of them and nothing
+    # else. Grade every one of them BEFORE running the round.
+    #   /api/v1/courses/<course_id>/assignments
+    covers:
+      - {name: "Part 1 - Team Document", points: 9,  assignment_id: 000000}
+      - {name: "Part 2 - Prototype",     points: 10, assignment_id: 000000}
+
+  example_final:
+    arc: "Your Project Name"
+    phase: "Final"
+    group_category_id: 000000
+    survey_quiz_id: 000000
+    adjustment_assignment_id: 000000
+    covers:
+      - {name: "Part 3 - Final", points: 25, assignment_id: 000000}
+
+# ---------------------------------------------------------------------------
+# Only `provision.py` reads this, and only when CREATING Canvas objects. Once
+# the ids above are filled in you can ignore it. Delete it if you built your
+# Canvas objects by hand.
+# ---------------------------------------------------------------------------
+provisioning:
+  # The assignment group the surveys go in -- usually participation, NOT the
+  # project group. The survey carries only completion credit.
+  #   /api/v1/courses/<course_id>/assignment_groups
+  participation_group_id: 000000
+
+  # Completion credit per evaluation. Keep it small: it should not outweigh the
+  # contribution consequence the adjustment itself creates.
+  completion_points: 3
+
+  # Per-round build fields go on the round itself, next to its ids:
+  #   module: "Week 8: Prototyping"        # must match the module name exactly
+  #   assignment_group_id: 000000          # the PROJECT's group, for the adjustment
+  #   quiz_due:       "2026-10-07T17:20:00Z"
+  #   adjustment_due: "2026-10-12T17:20:00Z"
+
+# ---------------------------------------------------------------------------
+# Everything below has a working default. Read docs/03-gradebook-math.md before
+# changing floor/ceiling: those two numbers decide what a free-rider loses.
+# ---------------------------------------------------------------------------
+
+scoring:
+  # factor = clamp(mean of ratings received / 100, floor, ceiling)
+  floor: 0.60
+  ceiling: 1.10
+
+  # Include the student's own self-rating in their mean. True is faithful to
+  # Doerry & Palmer and easier to defend in an appeal.
+  include_self_rating: true
+
+  # A ballot more than this far off the required (team size x 100) is HELD for
+  # review rather than rescaled. Rescaling a wildly wrong ballot manufactures
+  # extreme factors from numbers the student never intended.
+  max_rescale_pct: 10.0
+
+  # Ratings outside this band require a written justification (survey Q2).
+  justify_below: 80
+  justify_above: 120
+
+teams:
+  # Teams of 2 cannot be evaluated anonymously: there is no averaging, and each
+  # partner can infer the other's ballot from their own posted result.
+  #   clamp       narrow the factor range (default)
+  #   neutralize  force factor 1.00 and handle pairs by judgement
+  #   full        apply the normal clamp and accept the exposure
+  pair_policy: clamp
+  pair_floor: 0.80
+  pair_ceiling: 1.10
+
+  # Below this many raters on a team of 3+, one voice would set someone's whole
+  # factor, so it is bounded to 1.00 +/- single_ballot_cap.
+  min_raters: 2
+  single_ballot_cap: 0.10
+
+# Thresholds that flag a student for your attention. They never change a grade;
+# they decide what lands on your desk.
+flags:
+  low_mean_received: 85     # mean rating received falls below this
+  self_minus_peer_gap: 10   # self-rating exceeds peer mean by this much
+  flat_ballot_spread: 8     # flat ballot while teammates disagree this much
+  unanimous_low: 80         # EVERY teammate rated them below this -> conference
+
+grading:
+  cap_at_points_possible: true   # avoid 14.3/13 artifacts in a weighted gradebook
+  decimals: 2
