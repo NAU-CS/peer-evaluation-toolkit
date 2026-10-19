@@ -75,6 +75,36 @@ def answer_map(c, cid, quiz_id):
     return out
 
 
+def hide_grades(c, cid, assignment_id):
+    """Re-assert the manual-post (hidden) state on an assignment.
+
+    Canvas does NOT reliably keep a submission hidden across writes even when the
+    assignment's post policy is manual: deleting every comment on a hidden submission
+    clears its hidden state, and the next grade write then posts it. That happened
+    once here, and it published 34 students' peer-review adjustments for about five
+    minutes. REST has no endpoint for this; hiding is GraphQL-only, and it returns a
+    Progress to poll rather than acting synchronously.
+    """
+    import time
+    r = c.request("POST", "../graphql", json={
+        "query": "mutation($id:ID!){hideAssignmentGrades(input:{assignmentId:$id})"
+                 "{progress{_id} errors{message}}}",
+        "variables": {"id": str(assignment_id)}})
+    body = r.json()
+    node = (body.get("data") or {}).get("hideAssignmentGrades") or {}
+    if node.get("errors"):
+        return False, node["errors"]
+    pid = ((node.get("progress") or {}).get("_id"))
+    if not pid:
+        return False, [{"message": "no progress id returned"}]
+    for _ in range(30):
+        pr = c.get(f"progress/{pid}")
+        if pr.get("workflow_state") in ("completed", "failed"):
+            return pr["workflow_state"] == "completed", []
+        time.sleep(1)
+    return False, [{"message": "timed out waiting for Canvas to finish hiding"}]
+
+
 def num(v):
     if v is None:
         return None
@@ -87,6 +117,10 @@ def main():
     ap.add_argument("round", help="a key from the `rounds:` table in course.yml")
     ap.add_argument("--config", help="path to course.yml (default: auto-detect)")
     ap.add_argument("--post", action="store_true", help="write grades and comments to Canvas")
+    ap.add_argument("--replace-comments", action="store_true",
+                    help="delete this assignment's existing comments before posting. Use when "
+                         "re-running a round you have already posted but not yet released, so "
+                         "students see one corrected report instead of two conflicting ones.")
     ap.add_argument("--pair-policy", default=None, choices=("clamp", "neutralize", "full"),
                     help="override teams.pair_policy from course.yml")
     ap.add_argument("--floor", type=float, default=None, help="override scoring.floor")
@@ -206,9 +240,11 @@ def main():
                 # so they are not reported as a non-submitter -- completion credit and
                 # the "did not submit" follow-up list both key off that distinction.
                 uncovered = [m for m in mem if ratings.get(m) is None]
+                who = ", ".join(str(users.get(u, {}).get("email")
+                                     or users.get(u, {}).get("name") or u)
+                                 for u in uncovered)
                 recs[rater].problems.append(
-                    "allocation did not cover every team member; ballot excluded "
-                    "from scoring (submitted, but not counted)")
+                    f"your allocation had no line for {who}")
                 ballots.append(Ballot(
                     rater_id=rater, ratings={}, valid=False,
                     justification=recs[rater].justification,
@@ -294,6 +330,19 @@ def main():
         print("\nDRY RUN -- nothing written to Canvas. Re-run with --post to apply.")
         return
     adj_id = R.require("adjustment_assignment_id")
+
+    if args.replace_comments:
+        # Canvas appends comments; it never replaces them. Re-posting a corrected round
+        # without this leaves the student reading two reports that disagree.
+        removed = 0
+        for sub in c.paginate(f"courses/{CID}/assignments/{adj_id}/submissions",
+                              **{"include[]": "submission_comments"}):
+            for cm in (sub.get("submission_comments") or []):
+                c.request("DELETE", f"courses/{CID}/assignments/{adj_id}"
+                                    f"/submissions/{sub['user_id']}/comments/{cm['id']}")
+                removed += 1
+        print(f"removed {removed} existing comment(s) before posting")
+
     posted = 0
     for r in rows:
         if r["adjustment"] is None:
@@ -305,8 +354,24 @@ def main():
                   data={"submission[posted_grade]": r["adjustment"],
                         "comment[text_comment]": comment})
         posted += 1
-    print(f"\nposted {posted} adjustments to assignment {R.adjustment_assignment_id} "
-          f"(manual post policy -- release them in the gradebook when ready)")
+    manual = c.get(f"courses/{CID}/assignments/{adj_id}").get("post_manually")
+    note = ""
+    if manual:
+        # Verify rather than assume: a write can clear the hidden state (see hide_grades).
+        exposed = [s for s in c.paginate(f"courses/{CID}/assignments/{adj_id}/submissions")
+                   if s.get("posted_at")]
+        if exposed:
+            ok, errs = hide_grades(c, CID, adj_id)
+            note = (f"\n  re-hid {len(exposed)} submission(s) that Canvas had posted"
+                    if ok else
+                    f"\n  WARNING: {len(exposed)} submission(s) are VISIBLE to students and "
+                    f"could not be hidden automatically: {errs}\n"
+                    f"  Hide them now in the gradebook: the assignment's column menu -> Hide grades.")
+        note += "\n  verified hidden: " + str(sum(
+            1 for s in c.paginate(f"courses/{CID}/assignments/{adj_id}/submissions")
+            if s.get("posted_at") is None))
+    print(f"\nposted {posted} adjustments to assignment {adj_id} "
+          f"(manual post policy -- release them in the gradebook when ready){note}")
 
 
 if __name__ == "__main__":

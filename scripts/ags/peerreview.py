@@ -174,9 +174,16 @@ def render_report(rec, arc, phase, team_score, covered_points, anonymous=True):
             n = rec.n_raters
             self_incl = any(p.rater_email == rec.email and p.points is not None
                             for p in rec.received) or rec.self_points is not None
-        L.append(f"Ratings received: {n}" +
-                 (" (including your own self-rating)" if self_incl
-                  else " (you did not submit an evaluation, so your own rating is not among them)"))
+        # Three distinct states, and conflating the last two tells a student something
+        # false about their own conduct: a rejected ballot is NOT a missing one.
+        if self_incl:
+            why = " (including your own self-rating)"
+        elif rec.submitted:
+            why = (" (your own evaluation could not be counted -- see the note below --"
+                   " so your rating is not among them)")
+        else:
+            why = " (you did not submit an evaluation, so your own rating is not among them)"
+        L.append(f"Ratings received: {n}" + why)
         L.append(f"Mean rating      : {rec.mean_received:.1f}")
         L.append(f"Factor           : {rec.factor:.2f}"
                  + ("  [clamped]" if rec.factor in (0.60, 1.10) else ""))
@@ -186,7 +193,27 @@ def render_report(rec, arc, phase, team_score, covered_points, anonymous=True):
         sign = "+" if (rec.adjustment or 0) >= 0 else ""
         L.append(f"ADJUSTMENT POSTED: {sign}{rec.adjustment:.2f}")
         if abs(rec.adjustment or 0) < 0.005:
-            L.append("  (no change -- your team reported an even distribution of effort)")
+            # Why it is zero matters. "Everyone agreed effort was even" and "we could not
+            # use any of your team's ballots" are different facts about the team.
+            if not n:
+                L.append("  (no change -- no usable evaluations were received for your team,")
+                L.append("   so everyone was left at their team grade)")
+            else:
+                L.append("  (no change -- your team reported an even distribution of effort)")
+
+        # If the student's OWN ballot was thrown out, say so to their face and say why.
+        # They are about to fill in the next round; a silent rejection teaches nothing,
+        # and leaving it out is what made the old wording read as an accusation.
+        if rec.submitted and not self_incl:
+            L.append(SUB)
+            L.append("ABOUT YOUR OWN EVALUATION")
+            L.append("  You submitted one, and you get credit for it. It could not be counted")
+            L.append("  toward your teammates' scores because the points did not balance:")
+            for pr in (rec.problems or [])[:3]:
+                L.append(f"    - {pr}")
+            L.append("  Next round, use the calculator at the top of the survey and paste its")
+            L.append("  output exactly as it gives it to you -- it will not let you finish")
+            L.append("  until every teammate has a line and the total is correct.")
 
     def bullets(getter):
         out = []
