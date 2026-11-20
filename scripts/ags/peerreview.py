@@ -190,7 +190,9 @@ def render_report(rec, arc, phase, team_score, covered_points, anonymous=True):
         # otherwise the two numbers printed right above each other do not reconcile and
         # the report looks like it got the arithmetic wrong.
         note = ""
-        if rec.factor in (0.60, 1.10):
+        if any(f.startswith("neutralized_by_instructor") for f in (rec.flags or [])):
+            note = "  [set to 1.00 by your instructor -- see the note below]"
+        elif rec.factor in (0.60, 1.10):
             note = "  [limited to the published 0.60-1.10 range]"
         else:
             q = next((f for f in (rec.flags or []) if f.startswith("below_quorum")), None)
@@ -213,11 +215,27 @@ def render_report(rec, arc, phase, team_score, covered_points, anonymous=True):
         if abs(rec.adjustment or 0) < 0.005:
             # Why it is zero matters. "Everyone agreed effort was even" and "we could not
             # use any of your team's ballots" are different facts about the team.
-            if not n:
+            if any(f.startswith("neutralized_by_instructor") for f in (rec.flags or [])):
+                L.append("  (no change -- see the note below)")
+            elif not n:
                 L.append("  (no change -- no usable evaluations were received for your team,")
                 L.append("   so everyone was left at their team grade)")
             else:
                 L.append("  (no change -- your team reported an even distribution of effort)")
+
+        if any(f.startswith("neutralized_by_instructor") for f in (rec.flags or [])):
+            L.append(SUB)
+            L.append("WHY YOUR ADJUSTMENT IS ZERO")
+            L.append("  Your team's evaluations did not agree with each other. On the same")
+            L.append("  person, one teammate reported well below a fair share and another")
+            L.append("  reported well above. Averaging numbers that far apart would not")
+            L.append("  measure anyone's contribution -- it would just split the difference")
+            L.append("  between two people who saw the project differently.")
+            L.append("  So no one on this team is moved up or down for this checkpoint, and")
+            L.append("  everyone keeps their team grade. This is not a finding that anyone")
+            L.append("  did or did not contribute. If you have concerns about how the work")
+            L.append("  was shared, bring them to your instructor directly -- that is the")
+            L.append("  right route for it, and it is better raised now than at the final.")
 
         # If the student's OWN ballot was thrown out, say so to their face and say why.
         # They are about to fill in the next round; a silent rejection teaches nothing,

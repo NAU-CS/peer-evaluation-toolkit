@@ -254,6 +254,7 @@ LICENSE  CONTRIBUTING.md
 | [docs/03-gradebook-math.md](docs/03-gradebook-math.md) | Before you create a single assignment. The zero-point trick, the weighting arithmetic, and what to say when a student disputes a number. |
 | [docs/04-running-a-round.md](docs/04-running-a-round.md) | A round has closed and you want to score it. |
 | [docs/05-adapting-it.md](docs/05-adapting-it.md) | Your course is not IMG 186 — which is to say, always. Cadence, coverage, clamps, and flag thresholds. |
+| [docs/07-next-time.md](docs/07-next-time.md) | Before you run this a second time. Every item is something that actually went wrong in a live round, or a promise the code did not keep. |
 | [docs/06-canvas-field-notes.md](docs/06-canvas-field-notes.md) | Canvas is lying to you. Empirically verified failures, several of which return HTTP success while doing nothing. |
 
 ## Known limitations

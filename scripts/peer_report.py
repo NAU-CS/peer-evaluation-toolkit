@@ -117,6 +117,10 @@ def main():
     ap.add_argument("round", help="a key from the `rounds:` table in course.yml")
     ap.add_argument("--config", help="path to course.yml (default: auto-detect)")
     ap.add_argument("--post", action="store_true", help="write grades and comments to Canvas")
+    ap.add_argument("--neutralize-team", action="append", default=[], metavar="NAME",
+                    help="force every member of this team to 0.00 with an explanation. "
+                         "For a team whose ballots contradict each other so sharply that "
+                         "no individual number is defensible. Repeatable.")
     ap.add_argument("--post-disputed", action="store_true",
                     help="also post students whose raters disagreed sharply about them. "
                          "By default those are held back for you to decide, because an "
@@ -262,6 +266,16 @@ def main():
             b.problems.extend(budget_notes.get(rater, []))
             ballots.append(b)
         res, tflags = score_team(mem, ballots, **sk)
+        if t["name"] in args.neutralize_team:
+            # An instructor decision, recorded as one: the ballots on this team
+            # disagree past the point where any average means anything, so nobody
+            # is moved and everyone is told why.
+            for m in mem:
+                res[m].factor = 1.0
+                res[m].flags.append("neutralized_by_instructor: the evaluations for this "
+                                    "team contradicted each other too sharply to support "
+                                    "an individual adjustment")
+            tflags = list(tflags) + ["team neutralized by instructor"]
         earned = team_earned.get(gid)
         for m in mem:
             r, rec = res[m], recs[m]
