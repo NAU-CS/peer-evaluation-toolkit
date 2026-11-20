@@ -332,7 +332,9 @@ def main():
     S.append(f"  {'student':<28}{'team':<16}{'factor':>7}{'adjust':>9}")
     for r in sorted(rows, key=lambda x: x["name"]):
         adj = "n/a" if r["adjustment"] is None else f"{r['adjustment']:+.2f}"
-        S.append(f"  {r['name'][:28]:<28}{r['team'][:16]:<16}"
+        # Never truncate the team: "Construct Game 10" cut to 16 chars reads as
+        # "Construct Game 1", a different team that also exists.
+        S.append(f"  {r['name'][:28]:<28}{r['team']:<20}"
                  f"{(r['factor'] or 0):>7.2f}{adj:>9}")
 
     out = "\n".join(lines + [""] + S)
@@ -361,8 +363,11 @@ def main():
                 removed += 1
         print(f"removed {removed} existing comment(s) before posting")
 
+    # A neutralised team is a decision you have already made, so it overrides the hold.
+    # Otherwise half a neutralised team gets the explanation and half gets silence.
     disputed = {r["user_id"] for r in rows
-                if any(f.startswith("rating_dispute") for f in r["flags"])}
+                if any(f.startswith("rating_dispute") for f in r["flags"])
+                and not any(f.startswith("neutralized_by_instructor") for f in r["flags"])}
     if disputed and not args.post_disputed:
         print(f"\nHOLDING {len(disputed)} student(s) whose raters disagreed sharply. "
               f"Nothing is posted for them.")
