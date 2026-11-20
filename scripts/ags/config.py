@@ -138,6 +138,9 @@ class Config:
             self_minus_peer_gap=f.get("self_minus_peer_gap", 10),
             flat_ballot_spread=f.get("flat_ballot_spread", 8),
             unanimous_low=f.get("unanimous_low", 80),
+            # the same band the survey publishes as "needs explaining"
+            justify_below=s.get("justify_below", 80),
+            justify_above=s.get("justify_above", 120),
         )
 
     def ballot_kwargs(self):

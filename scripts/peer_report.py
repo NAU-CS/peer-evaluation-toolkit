@@ -117,6 +117,10 @@ def main():
     ap.add_argument("round", help="a key from the `rounds:` table in course.yml")
     ap.add_argument("--config", help="path to course.yml (default: auto-detect)")
     ap.add_argument("--post", action="store_true", help="write grades and comments to Canvas")
+    ap.add_argument("--post-disputed", action="store_true",
+                    help="also post students whose raters disagreed sharply about them. "
+                         "By default those are held back for you to decide, because an "
+                         "average of two very different opinions is not a consensus.")
     ap.add_argument("--replace-comments", action="store_true",
                     help="delete this assignment's existing comments before posting. Use when "
                          "re-running a round you have already posted but not yet released, so "
@@ -343,9 +347,23 @@ def main():
                 removed += 1
         print(f"removed {removed} existing comment(s) before posting")
 
-    posted = 0
+    disputed = {r["user_id"] for r in rows
+                if any(f.startswith("rating_dispute") for f in r["flags"])}
+    if disputed and not args.post_disputed:
+        print(f"\nHOLDING {len(disputed)} student(s) whose raters disagreed sharply. "
+              f"Nothing is posted for them.")
+        for r in rows:
+            if r["user_id"] in disputed:
+                d = next(f for f in r["flags"] if f.startswith("rating_dispute"))
+                print(f"  - {r['name']:26s} would have been {r['adjustment']:+.2f}   {d}")
+        print("  Decide these yourself, then re-run with --post-disputed to include them.")
+
+    posted = held = 0
     for r in rows:
         if r["adjustment"] is None:
+            continue
+        if r["user_id"] in disputed and not args.post_disputed:
+            held += 1
             continue
         rec = recs[r["user_id"]]
         comment = render_report(rec, R.arc, R.phase, r["team_earned"] or 0,

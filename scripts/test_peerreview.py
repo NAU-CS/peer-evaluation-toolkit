@@ -286,3 +286,52 @@ class TestRatingCountIsAuthoritative(unittest.TestCase):
         rec.received = [PeerComment("cpo59@example.edu", "Okonkwo, Chi", "x", "", "", 100)]
         out = render_report(rec, "Arc", "Draft", 27, 32)
         self.assertIn("Ratings received: 1", out)
+
+
+class TestFactorLineReconciles(unittest.TestCase):
+    """The assignment description tells students `factor = mean / 100`.
+
+    Anything that overrides that -- the published clamp, the quorum bound, the
+    team-of-two narrowing -- has to be stated in the copy the student reads, or the
+    two numbers printed one line apart simply do not add up.
+    """
+
+    def _rec(self, **kw):
+        r = StudentRecord(email="abc12@example.edu", name="Alvarez, Bea", team="T1",
+                          adjustment=0.0, n_ratings_counted=2, self_counted=True)
+        for k, v in kw.items():
+            setattr(r, k, v)
+        return r
+
+    def _factor_line(self, rec):
+        out = render_report(rec, "Arc", "Draft", 50, 56)
+        return next(l for l in out.splitlines() if l.startswith("Factor"))
+
+    def test_plain_factor_needs_no_note(self):
+        line = self._factor_line(self._rec(factor=0.93, mean_received=93.0))
+        self.assertEqual(line.strip(), "Factor           : 0.93")
+
+    def test_quorum_bound_is_explained(self):
+        rec = self._rec(factor=0.90, mean_received=75.0,
+                        flags=["below_quorum: only 1 peer rating(s); factor bounded to "
+                               "1.00 +/- 0.10"])
+        line = self._factor_line(rec)
+        self.assertIn("held near 1.00", line)
+        self.assertIn("only 1 teammate", line)
+        self.assertNotIn("1100010", line)          # the digit-scrape bug
+
+    def test_published_clamp_is_explained(self):
+        line = self._factor_line(self._rec(factor=1.10, mean_received=123.3))
+        self.assertIn("0.60-1.10", line)
+
+    def test_pair_narrowing_is_explained(self):
+        rec = self._rec(factor=0.80, mean_received=60.0,
+                        flags=["team_of_2: ratings are NOT anonymous, no averaging; "
+                               "policy=clamp (range 0.80-1.10)"])
+        self.assertIn("team of two", self._factor_line(rec))
+
+    def test_plural_teammates_reads_correctly(self):
+        rec = self._rec(factor=0.90, mean_received=70.0,
+                        flags=["below_quorum: only 0 peer rating(s); factor bounded to "
+                               "1.00 +/- 0.10"])
+        self.assertIn("no teammates rated you", self._factor_line(rec))

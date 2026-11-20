@@ -185,8 +185,26 @@ def render_report(rec, arc, phase, team_score, covered_points, anonymous=True):
             why = " (you did not submit an evaluation, so your own rating is not among them)"
         L.append(f"Ratings received: {n}" + why)
         L.append(f"Mean rating      : {rec.mean_received:.1f}")
-        L.append(f"Factor           : {rec.factor:.2f}"
-                 + ("  [clamped]" if rec.factor in (0.60, 1.10) else ""))
+        # The assignment description tells students the factor IS their mean / 100.
+        # Whenever something overrides that, the student-facing copy has to say so --
+        # otherwise the two numbers printed right above each other do not reconcile and
+        # the report looks like it got the arithmetic wrong.
+        note = ""
+        if rec.factor in (0.60, 1.10):
+            note = "  [limited to the published 0.60-1.10 range]"
+        else:
+            q = next((f for f in (rec.flags or []) if f.startswith("below_quorum")), None)
+            pair = next((f for f in (rec.flags or []) if f.startswith("team_of_2")), None)
+            if q and abs(rec.factor - (rec.mean_received or 100) / 100.0) > 0.0001:
+                m = re.search(r"only (\d+) peer", q)
+                n = int(m.group(1)) if m else 0
+                who = "no teammates" if n == 0 else ("only 1 teammate" if n == 1
+                                                     else f"only {n} teammates")
+                note = (f"  [held near 1.00: {who} rated you, and one rating should not "
+                        f"decide your factor]")
+            elif pair and abs(rec.factor - (rec.mean_received or 100) / 100.0) > 0.0001:
+                note = "  [narrowed: on a team of two there is no averaging]"
+        L.append(f"Factor           : {rec.factor:.2f}" + note)
         L.append(SUB)
         L.append(f"Team earned {team_score:g} of {covered_points:g} on the covered deliverables.")
         L.append(f"{team_score:g} x {rec.factor:.2f} = {team_score * rec.factor:.2f}")

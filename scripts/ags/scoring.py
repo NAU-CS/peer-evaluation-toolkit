@@ -113,6 +113,7 @@ def score_team(members, ballots, floor=0.60, ceiling=1.10,
                low_mean_received=85, self_minus_peer_gap=10,
                flag_all_even=True, flat_ballot_spread=8,
                min_raters=2, single_ballot_cap=0.10, pair_policy="clamp",
+               justify_below=80, justify_above=120,
                pair_floor=0.80, pair_ceiling=1.10, unanimous_low=80):
     """Turn a team's ballots into a factor per member, plus instructor flags."""
     valid = [b for b in ballots if b.valid]
@@ -148,7 +149,12 @@ def score_team(members, ballots, floor=0.60, ceiling=1.10,
             elif pair_policy == "clamp":
                 factor = min(max(factor, pair_floor), pair_ceiling)
         # Below quorum, one voice would set someone's whole factor. Bound how far it can move.
-        elif len(members) >= 3 and len(received) < min_raters and not practice:
+        # Count PEERS, not `received`: `received` includes the student's own self-rating, so
+        # a student with exactly one peer rating used to clear a min_raters of 2 and take the
+        # full unbounded factor. That is how a single teammate's 50 produced a -13.25 on a
+        # 56-point set, while the assignment description promises students in as many words
+        # that "a single harsh rating cannot sink you". This makes that promise true.
+        elif len(members) >= 3 and len(peers) < min_raters and not practice:
             factor = min(max(factor, 1.0 - single_ballot_cap), 1.0 + single_ballot_cap)
 
         # mean_received / peer_mean stay at full precision: the sum of the means
@@ -166,10 +172,21 @@ def score_team(members, ballots, floor=0.60, ceiling=1.10,
             res.flags.append(
                 f"team_of_2: ratings are NOT anonymous, no averaging; policy={pair_policy}"
                 + (f" (range {pair_floor:.2f}-{pair_ceiling:.2f})" if pair_policy == "clamp" else ""))
-        elif len(members) >= 3 and len(received) < min_raters:
+        elif len(members) >= 3 and len(peers) < min_raters:
             res.flags.append(
-                f"below_quorum: only {len(received)} rating(s); factor bounded to "
+                f"below_quorum: only {len(peers)} peer rating(s); factor bounded to "
                 f"1.00 +/- {single_ballot_cap:.2f}")
+        # A dispute is not a wide spread -- it is a contradiction. One teammate placing a
+        # student clearly BELOW a fair share while another places them clearly ABOVE is not
+        # a consensus to average; it is an argument, and the mean silently picks a winner.
+        # The thresholds are the same 80/120 the survey already tells students are the
+        # points at which a rating needs explaining, so nothing new is being asserted.
+        # (A plain spread test flags a flat-100 rater sitting next to a 150 as a "dispute",
+        # which it is not: one of them simply abstained from discriminating.)
+        if len(peers) >= 2 and min(peers) <= justify_below and max(peers) >= justify_above:
+            res.flags.append(
+                f"rating_dispute: peers placed this student on both sides of a fair share "
+                f"({sorted(peers)}); below {justify_below:g} and above {justify_above:g}")
         if received and mean < low_mean_received:
             res.flags.append(f"low_mean_received({mean:.1f})")
         if self_rating is not None and peer_mean is not None \

@@ -365,3 +365,73 @@ class TestHtmlToText(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class TestQuorumCountsPeers(unittest.TestCase):
+    """The assignment description promises "a single harsh rating cannot sink you".
+
+    The quorum guard used to count `received`, which includes the student's own
+    self-rating, so one peer rating cleared a min_raters of 2 and took the full
+    unbounded factor. On a live round that produced -13.25 on a 56-point set from
+    exactly one teammate's opinion.
+    """
+
+    def setUp(self):
+        self.M = ["a", "b", "c"]
+
+    def _score(self, ballots, **kw):
+        bs = [validate_ballot(r, rt, self.M) for r, rt in ballots]
+        return score_team(self.M, bs, **kw)[0]
+
+    def test_one_peer_rating_is_below_quorum(self):
+        # b rates a at 50; a rates everyone 100. a has ONE peer rating.
+        res = self._score([("b", {"a": 50, "b": 100, "c": 150}),
+                           ("a", {"a": 100, "b": 100, "c": 100})])
+        self.assertEqual(res["a"].mean_received, 75.0)
+        self.assertEqual(res["a"].factor, 0.90)          # bounded, not 0.75
+        self.assertTrue(any("below_quorum" in f for f in res["a"].flags))
+
+    def test_flag_reports_peer_count_not_total(self):
+        res = self._score([("b", {"a": 50, "b": 100, "c": 150}),
+                           ("a", {"a": 100, "b": 100, "c": 100})])
+        self.assertTrue(any("only 1 peer rating" in f for f in res["a"].flags))
+
+    def test_two_peers_clears_quorum_and_is_unbounded(self):
+        res = self._score([("b", {"a": 50, "b": 125, "c": 125}),
+                           ("c", {"a": 50, "b": 125, "c": 125}),
+                           ("a", {"a": 100, "b": 100, "c": 100})])
+        self.assertEqual(res["a"].factor, 0.6667)        # free to fall below the cap
+        self.assertFalse(any("below_quorum" in f for f in res["a"].flags))
+
+
+class TestRatingDispute(unittest.TestCase):
+    """A contradiction, not a spread: one peer below a fair share, another above."""
+
+    M = ["a", "b", "c", "d"]
+
+    def _flags(self, ballots, who="a", **kw):
+        bs = [validate_ballot(r, rt, self.M) for r, rt in ballots]
+        return score_team(self.M, bs, **kw)[0][who].flags
+
+    def test_opposite_sides_is_a_dispute(self):
+        f = self._flags([("b", {"a": 60, "b": 120, "c": 110, "d": 110}),
+                         ("c", {"a": 150, "b": 90, "c": 80, "d": 80}),
+                         ("d", {"a": 100, "b": 100, "c": 100, "d": 100})])
+        self.assertTrue(any("rating_dispute" in x for x in f))
+
+    def test_wide_spread_on_one_side_is_not_a_dispute(self):
+        # 100 and 150: one rater abstained from discriminating. Not a contradiction.
+        f = self._flags([("b", {"a": 100, "b": 100, "c": 100, "d": 100}),
+                         ("c", {"a": 150, "b": 90, "c": 80, "d": 80})])
+        self.assertFalse(any("rating_dispute" in x for x in f))
+
+    def test_a_single_peer_cannot_contradict_itself(self):
+        f = self._flags([("b", {"a": 60, "b": 150, "c": 95, "d": 95})])
+        self.assertFalse(any("rating_dispute" in x for x in f))
+
+    def test_band_follows_the_published_thresholds(self):
+        ballots = [("b", {"a": 85, "b": 105, "c": 105, "d": 105}),
+                   ("c", {"a": 115, "b": 95, "c": 95, "d": 95})]
+        self.assertFalse(any("rating_dispute" in x for x in self._flags(ballots)))
+        wider = self._flags(ballots, justify_below=90, justify_above=110)
+        self.assertTrue(any("rating_dispute" in x for x in wider))
